@@ -1,0 +1,11 @@
+[package]
+name = "bender_mq"
+version = "0.1.0"
+authors = ["David Huss <dh@widerstandzwecklos.at>"]
+
+[dependencies]
+bender_job = { git = "https://github.com/atoav/bender-job.git" }
+
+[dependencies.amqp]
+version = "0.1.1"
+default-features = false
