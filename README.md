@@ -6,7 +6,7 @@ amqp crate via traits
 It can be loaded in a rust library via the public git mirror by putting this in your Cargo.toml:
 ```rust
 [dependencies]
-bender_mq = { git = "https://github.com/atoav/bender-mq.git" }
+bender_mq = { git = "ssh://git@code.hfbk.net:4242/bendercode/bender-mq.git" }
 ```
 To update this run
 ```rust
