@@ -154,7 +154,7 @@ impl BenderMQ for Channel{
         // queue: &str, passive: bool, durable: bool, exclusive: bool, auto_delete: bool, nowait: bool, arguments: Table
         self.queue_declare(queue_name, false, true, false, false, false, Table::new()).ok().expect("Queue Declare failed for post_task (1)");
         self.basic_publish(exchange, routing_key, mandatory, immediate, properties, message).ok().expect("Couldn't publish message to task exchange");
-        self.queue_declare(queue_name, false, true, false, false, false, Table::new()).ok().expect("Queue Declare failed for post_task (2)");
+        // self.queue_declare(queue_name, false, true, false, false, false, Table::new()).ok().expect("Queue Declare failed for post_task (2)");
     }
 
     /// Serialize a job and post it to the the `topic-info` exchange using the \
