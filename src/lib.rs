@@ -144,9 +144,9 @@ impl BenderMQ for Channel{
 
     /// Post a message to `task` exchange with a routing key of your choice
     fn post_task(&mut self, message: Vec<u8>){
-        let queue_name = "task";
+        let queue_name = "tasks";
         let exchange = "task";
-        let routing_key = "task";
+        let routing_key = "tasks";
         let mandatory = true;
         let immediate = false;
         let properties = protocol::basic::BasicProperties{ content_type: Some("text".to_string()), ..Default::default()};
@@ -154,7 +154,7 @@ impl BenderMQ for Channel{
         // queue: &str, passive: bool, durable: bool, exclusive: bool, auto_delete: bool, nowait: bool, arguments: Table
         self.queue_declare(queue_name, false, true, false, false, false, Table::new()).ok().expect("Queue Declare failed for post_task (1)");
         self.basic_publish(exchange, routing_key, mandatory, immediate, properties, message).ok().expect("Couldn't publish message to task exchange");
-        // self.queue_declare(queue_name, false, true, false, false, false, Table::new()).ok().expect("Queue Declare failed for post_task (2)");
+        self.queue_declare(queue_name, false, true, false, false, false, Table::new()).ok().expect("Queue Declare failed for post_task (2)");
     }
 
     /// Serialize a job and post it to the the `topic-info` exchange using the \
