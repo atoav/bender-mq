@@ -126,7 +126,7 @@ impl BenderMQ for Channel{
 
     /// Post a message to `info-topic` exchange with a routing key of your choice
     fn post_to_info<S, U>(&mut self, routing_key: S, message: U) where S: Into<String>, U: Into<Vec<u8>>{
-        let queue_name = "info";
+        // let queue_name = "info";
         let exchange = "info-topic";
         let mandatory = true;
         let immediate = false;
@@ -136,15 +136,15 @@ impl BenderMQ for Channel{
         let message = message.into();
         // For some weird reason it works when the queue declare happens before AND after
         // queue: &str, passive: bool, durable: bool, exclusive: bool, auto_delete: bool, nowait: bool, arguments: Table
-        self.queue_declare(queue_name, false, true, false, false, false, Table::new()).ok().expect("Queue Declare failed for post_to_info (1)");
+        // self.queue_declare(queue_name, false, true, false, false, false, Table::new()).ok().expect("Queue Declare failed for post_to_info (1)");
         self.basic_publish(exchange, routing_key, mandatory, immediate, properties, message).ok().expect("Couldn't publish message to info-topic exchange");
-        self.queue_declare(queue_name, false, true, false, false, false, Table::new()).ok().expect("Queue Declare failed for post_to_info (2)");
+        // self.queue_declare(queue_name, false, true, false, false, false, Table::new()).ok().expect("Queue Declare failed for post_to_info (2)");
     }
 
 
     /// Post a message to `task` exchange with a routing key of your choice
     fn post_task(&mut self, message: Vec<u8>){
-        let queue_name = "task";
+        // let queue_name = "task";
         let exchange = "task";
         let routing_key = "task";
         let mandatory = true;
