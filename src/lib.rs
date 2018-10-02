@@ -28,10 +28,11 @@
 //! To run cargo, make sure you have rust installed. Go to [rustup.rs](http://rustup.rs) and follow the instructions there
 //! 
 
-
+extern crate bender_config;
 extern crate bender_job;
 extern crate amqp;
 
+use bender_config::Config;
 use bender_job::Job;
 use amqp::{Basic, Session, Table, protocol};
 pub use amqp::Channel;
@@ -47,6 +48,7 @@ type GenResult<T> = Result<T, GenError>;
 pub trait BenderMQ{
     fn open_channel<S>(url: S) -> GenResult<Self> 
     where S: Into<String>, Self: std::marker::Sized;
+    fn open_default_channel() -> GenResult<Self> where Self: std::marker::Sized;
     fn declare_topic_exchange(&mut self) -> GenResult<()>;
     fn declare_task_exchange(&mut self) -> GenResult<()>;
     fn post_to_info<S, U>(&mut self, routing_key: S, message: U) where S: Into<String>, U: Into<Vec<u8>>;
@@ -65,10 +67,26 @@ impl BenderMQ for Channel{
     /// ```
     fn open_channel<S>(url: S) -> GenResult<Self> where S: Into<String>{
         let url = url.into();
-        let mut session = Session::open_url(url.as_str()).expect(&format!("Error while opening a connection to {}", url)[..]);
+        let mut session = Session::open_url(url.as_str()).expect(format!("Error while opening a connection to {}", url).as_str());
         let channel = session.open_channel(1)?;
         Ok(channel)
     }
+
+    /// Open a AMPQ session and return a channel to the default URK specified in\
+    /// the config. The method can be used like this:
+    /// ```
+    /// extern crate bender_mq;
+    /// use bender_mq::{Channel, BenderMQ};
+    /// let channel = Channel::open_default_channel().expect("Couldn't aquire connection.");
+    /// ```
+    fn open_default_channel() -> GenResult<Self>{
+        let p = Config::location();
+        let config = Config::from_file(p).unwrap();
+        let mut session = Session::open_url(config.rabbitmq.url.as_str()).expect(format!("Error while opening a connection to {}", config.rabbitmq.url).as_str());
+        let channel = session.open_channel(1)?;
+        Ok(channel)
+    }
+
 
     /// Declare a topic exchange named `info-topic`. Messages to this exchange \
     /// may be posted using the `post_to_info()` and the `post_job()` methods.
