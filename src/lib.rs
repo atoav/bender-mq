@@ -134,11 +134,12 @@ impl BenderMQ for Channel{
         let routing_key = routing_key.as_str();
         let properties = protocol::basic::BasicProperties{ content_type: Some("text".to_string()), ..Default::default()};
         let message = message.into();
-        // For some weird reason it works when the queue declare happens before AND after
         // queue: &str, passive: bool, durable: bool, exclusive: bool, auto_delete: bool, nowait: bool, arguments: Table
         // self.queue_declare(queue_name, false, true, false, false, false, Table::new()).ok().expect("Queue Declare failed for post_to_info (1)");
-        self.basic_publish(exchange, routing_key, mandatory, immediate, properties, message).ok().expect("Couldn't publish message to info-topic exchange");
-        // self.queue_declare(queue_name, false, true, false, false, false, Table::new()).ok().expect("Queue Declare failed for post_to_info (2)");
+        match self.basic_publish(exchange, routing_key, mandatory, immediate, properties, message){
+            Err(err) => println!("Error: Couldn't publish message to info-topic exchange: {}", err),
+            Ok(_) => ()
+        }
     }
 
 
@@ -150,10 +151,12 @@ impl BenderMQ for Channel{
         let mandatory = true;
         let immediate = false;
         let properties = protocol::basic::BasicProperties{ content_type: Some("text".to_string()), ..Default::default()};
-        // For some weird reason it works when the queue declare happens before AND after
         // queue: &str, passive: bool, durable: bool, exclusive: bool, auto_delete: bool, nowait: bool, arguments: Table
         // self.queue_declare(queue_name, false, true, false, false, false, Table::new()).ok().expect("Queue Declare failed for post_task (1)");
-        self.basic_publish(exchange, routing_key, mandatory, immediate, properties, message).ok().expect("Couldn't publish message to task exchange");
+        match self.basic_publish(exchange, routing_key, mandatory, immediate, properties, message){
+            Err(err) => println!("Error: Couldn't publish message to task exchange: {}", err),
+            Ok(_) => ()
+        }
     }
 
     /// Serialize a job and post it to the the `topic-info` exchange using the \
