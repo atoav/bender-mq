@@ -52,7 +52,7 @@ pub trait BenderMQ{
     fn declare_topic_exchange(&mut self) -> GenResult<()>;
     fn declare_task_exchange(&mut self) -> GenResult<()>;
     fn post_to_info<S, U>(&mut self, routing_key: S, message: U) where S: Into<String>, U: Into<Vec<u8>>;
-    fn post_task<S>(&mut self, message: S) where S: Into<String>;
+    fn post_task(&mut self, message: Vec<u8>);
     fn post_job(&mut self, job: Job) -> GenResult<String>;
 }
 
@@ -143,13 +143,12 @@ impl BenderMQ for Channel{
 
 
     /// Post a message to `task` exchange with a routing key of your choice
-    fn post_task<S>(&mut self, message: S) where S: Into<String>{
+    fn post_task(&mut self, message: Vec<u8>){
         let queue_name = "task";
         let exchange = "task";
         let mandatory = true;
         let immediate = false;
         let properties = protocol::basic::BasicProperties{ content_type: Some("text".to_string()), ..Default::default()};
-        let message = message.into().into_bytes();
         // For some weird reason it works when the queue declare happens before AND after
         // queue: &str, passive: bool, durable: bool, exclusive: bool, auto_delete: bool, nowait: bool, arguments: Table
         self.queue_declare(queue_name, false, true, false, false, false, Table::new()).ok().expect("Queue Declare failed!");
