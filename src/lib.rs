@@ -26,6 +26,10 @@
 //! 
 //! ## Installation
 //! This is a library and will not be directly used. No need to install anything here
+//! 
+//! ## API Methods
+//! Check out the examples at the [BenderMQ](trait.BenderMQ.html) trait definition
+
 
 extern crate bender_config;
 extern crate bender_job;
@@ -45,19 +49,6 @@ type GenResult<T> = Result<T, GenError>;
 
 /// A trait for Channel to make it easier to post info
 pub trait BenderMQ{
-    fn open_channel<S>(url: S) -> GenResult<Self> 
-    where S: Into<String>, Self: std::marker::Sized;
-    fn open_default_channel() -> GenResult<Self> where Self: std::marker::Sized;
-    fn declare_topic_exchange(&mut self) -> GenResult<()>;
-    fn declare_job_exchange(&mut self) -> GenResult<()>;
-    fn post_to_info<S, U>(&mut self, routing_key: S, message: U) where S: Into<String>, U: Into<Vec<u8>>;
-    fn post_to_job<U>(&mut self, message: U) where U: Into<Vec<u8>>;
-    fn post_job(&mut self, job: Job) -> GenResult<String>;
-    fn post_job_info(&mut self, job: Job) -> GenResult<String>;
-}
-
-
-impl BenderMQ for Channel{
     /// Open a AMPQ session and return a channel. The method can be used like this:
     /// ```
     /// extern crate bender_mq;
@@ -65,12 +56,8 @@ impl BenderMQ for Channel{
     /// let url = "amqp://localhost//";
     /// let channel = Channel::open_channel(url).expect("Couldn't aquire connection.");
     /// ```
-    fn open_channel<S>(url: S) -> GenResult<Self> where S: Into<String>{
-        let url = url.into();
-        let mut session = Session::open_url(url.as_str()).expect(format!("Error while opening a connection to {}", url).as_str());
-        let channel = session.open_channel(1)?;
-        Ok(channel)
-    }
+    fn open_channel<S>(url: S) -> GenResult<Self> 
+    where S: Into<String>, Self: std::marker::Sized;
 
     /// Open a AMPQ session and return a channel to the default URK specified in\
     /// the config. The method can be used like this:
@@ -79,6 +66,55 @@ impl BenderMQ for Channel{
     /// use bender_mq::{Channel, BenderMQ};
     /// let channel = Channel::open_default_channel().expect("Couldn't aquire connection.");
     /// ```
+    fn open_default_channel() -> GenResult<Self> where Self: std::marker::Sized;
+
+    /// Declare a topic exchange named `info-topic`. Messages to this exchange \
+    /// may be posted using the `post_to_info()` and the `post_job()` methods.
+    /// ```
+    /// # extern crate bender_mq;
+    /// # use bender_mq::{Channel, BenderMQ};
+    /// let mut channel = Channel::open_default_channel().expect("Couldn't aquire connection.");
+    /// channel.declare_topic_exchange().expect("Declaration of topic exchange failed");
+    /// ```
+    fn declare_topic_exchange(&mut self) -> GenResult<()>;
+
+    /// Declare a direct exchange named `job`. Messages to this exchange \
+    /// may be posted using the `post_job()` method.
+    /// ```
+    /// # extern crate bender_mq;
+    /// # use bender_mq::{Channel, BenderMQ};
+    /// let mut channel = Channel::open_default_channel().expect("Couldn't aquire connection.");
+    /// channel.declare_job_exchange().expect("Declaration of job exchange failed");
+    /// ```
+    fn declare_job_exchange(&mut self) -> GenResult<()>;
+
+    /// Post a routed message to `info-topic` exchange with a routing key of your choice
+    fn post_to_info<S, U>(&mut self, routing_key: S, message: U) where S: Into<String>, U: Into<Vec<u8>>;
+    
+    /// Post a direct message to `job` exchange
+    fn post_to_job<U>(&mut self, message: U) where U: Into<Vec<u8>>;
+
+    /// Serialize a job and post it to the the `job` exchange using the \
+    /// `post_to_job()` method. Get the serialized json back for debouncing
+    fn post_job(&mut self, job: Job) -> GenResult<String>;
+
+    /// Serialize a job and post it to the the `topic-info` exchange using the \
+    /// `post_to_info()` method. Get the serialized json back for debouncing
+    fn post_job_info(&mut self, job: Job) -> GenResult<String>;
+}
+
+
+impl BenderMQ for Channel{
+    /// Open a AMPQ session and return a channel.
+    fn open_channel<S>(url: S) -> GenResult<Self> where S: Into<String>{
+        let url = url.into();
+        let mut session = Session::open_url(url.as_str()).expect(format!("Error while opening a connection to {}", url).as_str());
+        let channel = session.open_channel(1)?;
+        Ok(channel)
+    }
+
+    /// Open a AMPQ session and return a channel to the default URK specified in\
+    /// the config.
     fn open_default_channel() -> GenResult<Self>{
         let p = Config::location();
         let config = Config::from_file(p).unwrap();
@@ -90,12 +126,6 @@ impl BenderMQ for Channel{
 
     /// Declare a topic exchange named `info-topic`. Messages to this exchange \
     /// may be posted using the `post_to_info()` and the `post_job()` methods.
-    /// ```
-    /// # extern crate bender_mq;
-    /// # use bender_mq::{Channel, BenderMQ};
-    /// let mut channel = Channel::open_default_channel().expect("Couldn't aquire connection.");
-    /// channel.declare_topic_exchange().expect("Declaration of topic exchange failed");
-    /// ```
     fn declare_topic_exchange(&mut self) -> GenResult<()>{
         let exchange_name = "info-topic";
         let exchange_type = "topic";
@@ -106,12 +136,6 @@ impl BenderMQ for Channel{
 
     /// Declare a direct exchange named `job`. Messages to this exchange \
     /// may be posted using the `post_job()` method.
-    /// ```
-    /// # extern crate bender_mq;
-    /// # use bender_mq::{Channel, BenderMQ};
-    /// let mut channel = Channel::open_default_channel().expect("Couldn't aquire connection.");
-    /// channel.declare_job_exchange().expect("Declaration of job exchange failed");
-    /// ```
     fn declare_job_exchange(&mut self) -> GenResult<()>{
         let exchange_name = "job";
         let exchange_type = "direct";
