@@ -51,7 +51,8 @@ pub trait BenderMQ{
     fn declare_topic_exchange(&mut self) -> GenResult<()>;
     fn declare_job_exchange(&mut self) -> GenResult<()>;
     fn post_to_info<S, U>(&mut self, routing_key: S, message: U) where S: Into<String>, U: Into<Vec<u8>>;
-    fn post_job(&mut self, message: Vec<u8>);
+    fn post_to_job<U>(&mut self, message: U) where U: Into<Vec<u8>>;
+    fn post_job(&mut self, job: Job) -> GenResult<String>;
     fn post_job_info(&mut self, job: Job) -> GenResult<String>;
 }
 
@@ -139,24 +140,38 @@ impl BenderMQ for Channel{
     }
 
 
-    /// Post a message to `job` exchange with a routing key of your choice
-    fn post_job(&mut self, message: Vec<u8>){
-        // let queue_name = "job";
+    /// Post a direct message to `job` exchange
+    fn post_to_job<U>(&mut self, message: U) where U: Into<Vec<u8>>{
+        // let queue_name = "info";
         let exchange = "job";
-        let routing_key = "job";
         let mandatory = true;
         let immediate = false;
+        let routing_key = "job".to_string();
         let properties = protocol::basic::BasicProperties{ content_type: Some("text".to_string()), ..Default::default()};
+        let message = message.into();
         // queue: &str, passive: bool, durable: bool, exclusive: bool, auto_delete: bool, nowait: bool, arguments: Table
-        // self.queue_declare(queue_name, false, true, false, false, false, Table::new()).ok().expect("Queue Declare failed for post_task (1)");
-        match self.basic_publish(exchange, routing_key, mandatory, immediate, properties, message){
-            Err(err) => println!("Error: Couldn't publish message to job exchange: {}", err),
+        // self.queue_declare(queue_name, false, true, false, false, false, Table::new()).ok().expect("Queue Declare failed for post_to_info (1)");
+        match self.basic_publish(exchange, routing_key.as_str(), mandatory, immediate, properties, message){
+            Err(err) => println!("Error: Couldn't publish message to info-topic exchange: {}", err),
             Ok(_) => ()
         }
     }
 
+
+    /// Serialize a job and post it to the the `job` exchange using the \
+    /// `post_to_job()` method. Get the serialized json back for debouncing
+    fn post_job(&mut self,job: Job) -> GenResult<String>{
+        match job.serialize(){
+            Ok(json) => {
+                self.post_to_job(json.as_str());
+                Ok(json)
+            },
+            Err(err) => Err(err)
+        }
+    }
+
     /// Serialize a job and post it to the the `topic-info` exchange using the \
-    /// `post_to_info()` method. 
+    /// `post_to_info()` method. Get the serialized json back for debouncing
     fn post_job_info(&mut self, job: Job) -> GenResult<String>{
         match job.serialize(){
             Ok(json) => {
