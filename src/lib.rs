@@ -35,6 +35,7 @@ extern crate bender_config;
 extern crate bender_job;
 extern crate amqp;
 
+use bender_job::Task;
 use bender_config::Config;
 use bender_job::Job;
 use amqp::{Basic, Session, Table, protocol};
@@ -88,11 +89,24 @@ pub trait BenderMQ{
     /// ```
     fn declare_job_exchange(&mut self) -> GenResult<()>;
 
+    /// Declare a direct exchange named `work`. Messages to this exchange \
+    /// may be posted using the `post_task()` or `post_to_work()` methods.
+    /// ```
+    /// # extern crate bender_mq;
+    /// # use bender_mq::{Channel, BenderMQ};
+    /// let mut channel = Channel::open_default_channel().expect("Couldn't aquire connection.");
+    /// channel.declare_work_exchange().expect("Declaration of work exchange failed");
+    /// ```
+    fn declare_work_exchange(&mut self) -> GenResult<()>;
+
     /// Post a routed message to `info-topic` exchange with a routing key of your choice
     fn post_to_info<S, U>(&mut self, routing_key: S, message: U) where S: Into<String>, U: Into<Vec<u8>>;
     
     /// Post a direct message to `job` exchange
     fn post_to_job<U>(&mut self, message: U) where U: Into<Vec<u8>>;
+
+    /// Post a direct message to `work` exchange
+    fn post_to_work<U>(&mut self, message: U) where U: Into<Vec<u8>>;
 
     /// Serialize a job and post it to the the `job` exchange using the \
     /// `post_to_job()` method. Get the serialized json back for debouncing
@@ -101,6 +115,10 @@ pub trait BenderMQ{
     /// Serialize a job and post it to the the `topic-info` exchange using the \
     /// `post_to_info()` method. Get the serialized json back for debouncing
     fn post_job_info(&mut self, job: Job) -> GenResult<String>;
+
+    /// Serialize a task and post it to the the `task` exchange using the \
+    /// `post_to_work()` method. Get the serialized json back for debouncing
+    fn post_task(&mut self, task: Task) -> GenResult<String>;
 }
 
 
@@ -145,6 +163,17 @@ impl BenderMQ for Channel{
         Ok(())
     }
 
+    /// Declare a direct exchange named `work`. Messages to this exchange \
+    /// may be posted using the `post_work()` method.
+    fn declare_work_exchange(&mut self) -> GenResult<()>{
+        let exchange_name = "work";
+        let exchange_type = "direct";
+        // exchange name, exchange type, passive, durable, auto_delete, internal, nowait, arguments
+        // posibble exchange types are: direct, fanout, topic, headers
+        self.exchange_declare(exchange_name, exchange_type, false, true, false, false, false, Table::new())?;
+        Ok(())
+    }
+
     /// Post a message to `info-topic` exchange with a routing key of your choice
     fn post_to_info<S, U>(&mut self, routing_key: S, message: U) where S: Into<String>, U: Into<Vec<u8>>{
         // let queue_name = "info";
@@ -181,6 +210,23 @@ impl BenderMQ for Channel{
         }
     }
 
+    /// Post a direct message to `work` exchange
+    fn post_to_work<U>(&mut self, message: U) where U: Into<Vec<u8>>{
+        // let queue_name = "info";
+        let exchange = "work";
+        let mandatory = true;
+        let immediate = false;
+        let routing_key = "work".to_string();
+        let properties = protocol::basic::BasicProperties{ content_type: Some("text".to_string()), ..Default::default()};
+        let message = message.into();
+        // queue: &str, passive: bool, durable: bool, exclusive: bool, auto_delete: bool, nowait: bool, arguments: Table
+        // self.queue_declare(queue_name, false, true, false, false, false, Table::new()).ok().expect("Queue Declare failed for post_to_info (1)");
+        match self.basic_publish(exchange, routing_key.as_str(), mandatory, immediate, properties, message){
+            Err(err) => println!("Error: Couldn't publish message to info-topic exchange: {}", err),
+            Ok(_) => ()
+        }
+    }
+
 
     /// Serialize a job and post it to the the `job` exchange using the \
     /// `post_to_job()` method. Get the serialized json back for debouncing
@@ -200,6 +246,18 @@ impl BenderMQ for Channel{
         match job.serialize(){
             Ok(json) => {
                 self.post_to_info(job.id().as_str(), json.as_str());
+                Ok(json)
+            },
+            Err(err) => Err(err)
+        }
+    }
+
+    /// Serialize a task and post it to the the `task` exchange using the \
+    /// `post_to_task()` method. Get the serialized json back for debouncing
+    fn post_task(&mut self, task: Task) -> GenResult<String>{
+        match task.serialize(){
+            Ok(json) => {
+                self.post_to_work(json.as_str());
                 Ok(json)
             },
             Err(err) => Err(err)
