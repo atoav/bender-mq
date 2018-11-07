@@ -110,15 +110,15 @@ pub trait BenderMQ{
 
     /// Serialize a job and post it to the the `job` exchange using the \
     /// `post_to_job()` method. Get the serialized json back for debouncing
-    fn post_job(&mut self, job: Job) -> GenResult<String>;
+    fn post_job(&mut self, job: &Job) -> GenResult<String>;
 
     /// Serialize a job and post it to the the `topic-info` exchange using the \
     /// `post_to_info()` method. Get the serialized json back for debouncing
-    fn post_job_info(&mut self, job: Job) -> GenResult<String>;
+    fn post_job_info(&mut self, job: &Job) -> GenResult<String>;
 
     /// Serialize a task and post it to the the `task` exchange using the \
     /// `post_to_work()` method. Get the serialized json back for debouncing
-    fn post_task(&mut self, task: Task) -> GenResult<String>;
+    fn post_task(&mut self, task: &Task) -> GenResult<String>;
 }
 
 
@@ -230,7 +230,7 @@ impl BenderMQ for Channel{
 
     /// Serialize a job and post it to the the `job` exchange using the \
     /// `post_to_job()` method. Get the serialized json back for debouncing
-    fn post_job(&mut self,job: Job) -> GenResult<String>{
+    fn post_job(&mut self,job: &Job) -> GenResult<String>{
         match job.serialize(){
             Ok(json) => {
                 self.post_to_job(json.as_str());
@@ -242,7 +242,7 @@ impl BenderMQ for Channel{
 
     /// Serialize a job and post it to the the `topic-info` exchange using the \
     /// `post_to_info()` method. Get the serialized json back for debouncing
-    fn post_job_info(&mut self, job: Job) -> GenResult<String>{
+    fn post_job_info(&mut self, job: &Job) -> GenResult<String>{
         match job.serialize(){
             Ok(json) => {
                 self.post_to_info(job.id().as_str(), json.as_str());
@@ -254,7 +254,7 @@ impl BenderMQ for Channel{
 
     /// Serialize a task and post it to the the `task` exchange using the \
     /// `post_to_task()` method. Get the serialized json back for debouncing
-    fn post_task(&mut self, task: Task) -> GenResult<String>{
+    fn post_task(&mut self, task: &Task) -> GenResult<String>{
         match task.serialize(){
             Ok(json) => {
                 self.post_to_work(json.as_str());
