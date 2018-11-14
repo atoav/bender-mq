@@ -247,7 +247,7 @@ impl BenderMQ for Channel{
         let routing_key = "job".to_string();
         let properties = protocol::basic::BasicProperties{ content_type: Some("text".to_string()), ..Default::default()};
         let message = message.into();
-        self.create_job_queue().expect("Error: Couldn't create and/or bind job queue");
+        // self.create_job_queue().expect("Error: Couldn't create and/or bind job queue");
         match self.basic_publish(exchange, routing_key.as_str(), mandatory, immediate, properties, message){
             Err(err) => println!("Error: Couldn't publish message to job exchange: {}", err),
             Ok(_) => ()
@@ -262,7 +262,7 @@ impl BenderMQ for Channel{
         let routing_key = "work".to_string();
         let properties = protocol::basic::BasicProperties{ content_type: Some("text".to_string()), ..Default::default()};
         let message = message.into();
-        self.create_work_queue().expect("Error: Couldn't create and/or bind work queue");
+        // self.create_work_queue().expect("Error: Couldn't create and/or bind work queue");
         match self.basic_publish(exchange, routing_key.as_str(), mandatory, immediate, properties, message){
             Err(err) => println!("Error: Couldn't publish message to info-topic exchange: {}", err),
             Ok(_) => ()
