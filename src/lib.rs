@@ -190,11 +190,11 @@ impl BenderMQ for Channel{
     /// Create a Job queue that is bound to the job exchange
     fn create_job_queue(&mut self) -> GenResult<()>{
         let queue_name = "job";
-        let exchange_name = "job";
+        // let exchange_name = "job";
         //queue: &str, passive: bool, durable: bool, exclusive: bool, auto_delete: bool, nowait: bool, arguments: Table
         self.queue_declare(queue_name, false, true, false, false, false, Table::new())?;
         // queue: S, exchange: S, routing_key: S, nowait: bool,a rguments: Table
-        self.queue_bind(queue_name, exchange_name, "#", false, Table::new())?;
+        // self.queue_bind(queue_name, exchange_name, "#", false, Table::new())?;
         Ok(())
     }
 
@@ -212,11 +212,11 @@ impl BenderMQ for Channel{
     /// Create a Work queue that is bound to the work exchange
     fn create_work_queue(&mut self) -> GenResult<()>{
         let queue_name = "work";
-        let exchange_name = "work";
+        // let exchange_name = "work";
         //queue: &str, passive: bool, durable: bool, exclusive: bool, auto_delete: bool, nowait: bool, arguments: Table
         self.queue_declare(queue_name, false, true, false, false, false, Table::new())?;
         // queue: S, exchange: S, routing_key: S, nowait: bool,a rguments: Table
-        self.queue_bind(queue_name, exchange_name, "#", false, Table::new())?;
+        // self.queue_bind(queue_name, exchange_name, "#", false, Table::new())?;
         Ok(())
     }
 
