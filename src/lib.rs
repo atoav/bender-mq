@@ -99,6 +99,19 @@ pub trait BenderMQ{
     /// ```
     fn declare_work_exchange(&mut self) -> GenResult<()>;
 
+    /// Declare a queue named `info`. This queue will be bound to the exchange \
+    /// named `info-topic`.
+    fn create_info_queue(&mut self) -> GenResult<()>;
+
+    /// Declare a queue named `job`. This queue will be bound to the exchange \
+    /// named `job`.
+    fn create_job_queue(&mut self) -> GenResult<()>;
+
+    /// Declare a queue named `work`. This queue will be bound to the exchange \
+    /// named `work`.
+    fn create_work_queue(&mut self) -> GenResult<()>;
+
+
     /// Post a routed message to `info-topic` exchange with a routing key of your choice
     fn post_to_info<S, U>(&mut self, routing_key: S, message: U) where S: Into<String>, U: Into<Vec<u8>>;
     
@@ -152,6 +165,17 @@ impl BenderMQ for Channel{
         Ok(())
     }
 
+    /// Create a info queue that is bound to the info-topic exchange
+    fn create_info_queue(&mut self) -> GenResult<()>{
+        let queue_name = "info";
+        let exchange_name = "info-topic";
+        //queue: &str, passive: bool, durable: bool, exclusive: bool, auto_delete: bool, nowait: bool, arguments: Table
+        self.queue_declare(queue_name, false, true, false, false, false, Table::new())?;
+        // queue: S, exchange: S, routing_key: S, nowait: bool,a rguments: Table
+        self.queue_bind(queue_name, exchange_name, "#", false, Table::new())?;
+        Ok(())
+    }
+
     /// Declare a direct exchange named `job`. Messages to this exchange \
     /// may be posted using the `post_job()` method.
     fn declare_job_exchange(&mut self) -> GenResult<()>{
@@ -163,6 +187,17 @@ impl BenderMQ for Channel{
         Ok(())
     }
 
+    /// Create a Job queue that is bound to the job exchange
+    fn create_job_queue(&mut self) -> GenResult<()>{
+        let queue_name = "job";
+        let exchange_name = "job";
+        //queue: &str, passive: bool, durable: bool, exclusive: bool, auto_delete: bool, nowait: bool, arguments: Table
+        self.queue_declare(queue_name, false, true, false, false, false, Table::new())?;
+        // queue: S, exchange: S, routing_key: S, nowait: bool,a rguments: Table
+        self.queue_bind(queue_name, exchange_name, "#", false, Table::new())?;
+        Ok(())
+    }
+
     /// Declare a direct exchange named `work`. Messages to this exchange \
     /// may be posted using the `post_work()` method.
     fn declare_work_exchange(&mut self) -> GenResult<()>{
@@ -171,6 +206,17 @@ impl BenderMQ for Channel{
         // exchange name, exchange type, passive, durable, auto_delete, internal, nowait, arguments
         // posibble exchange types are: direct, fanout, topic, headers
         self.exchange_declare(exchange_name, exchange_type, false, true, false, false, false, Table::new())?;
+        Ok(())
+    }
+
+    /// Create a Work queue that is bound to the work exchange
+    fn create_work_queue(&mut self) -> GenResult<()>{
+        let queue_name = "work";
+        let exchange_name = "work";
+        //queue: &str, passive: bool, durable: bool, exclusive: bool, auto_delete: bool, nowait: bool, arguments: Table
+        self.queue_declare(queue_name, false, true, false, false, false, Table::new())?;
+        // queue: S, exchange: S, routing_key: S, nowait: bool,a rguments: Table
+        self.queue_bind(queue_name, exchange_name, "#", false, Table::new())?;
         Ok(())
     }
 
