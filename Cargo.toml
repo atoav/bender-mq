@@ -8,5 +8,5 @@ bender_config = { git = "ssh://git@code.hfbk.net:4242/bendercode/bender-config.g
 bender_job = { git = "ssh://git@code.hfbk.net:4242/bendercode/bender-job.git" }
 
 [dependencies.amqp]
-version = "0.1.1"
+version = "0.1.2"
 default-features = false
