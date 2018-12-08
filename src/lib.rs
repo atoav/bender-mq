@@ -308,7 +308,7 @@ impl BenderMQ for Channel{
     fn post_task_info(&mut self, task: &Task) -> GenResult<String>{
         match task.serialize(){
             Ok(json) => {
-                let routing_key = "task_for_".to_string()+task.parent_id.as_str();
+                let routing_key = "task.".to_string()+task.parent_id.as_str();
                 self.post_to_info(routing_key.as_str(), json.as_str());
                 Ok(json)
             },
