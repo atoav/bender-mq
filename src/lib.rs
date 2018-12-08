@@ -132,6 +132,10 @@ pub trait BenderMQ{
     /// Serialize a task and post it to the the `task` exchange using the \
     /// `post_to_work()` method. Get the serialized json back for debouncing
     fn post_task(&mut self, task: &Task) -> GenResult<String>;
+
+    /// Serialize a task and post it to the the `topic-info` exchange using the \
+    /// `post_to_info()` method. Get the serialized json back for debouncing
+    fn post_task_info(&mut self, task: &Task) -> GenResult<String>;
 }
 
 
@@ -294,6 +298,18 @@ impl BenderMQ for Channel{
         match task.serialize(){
             Ok(json) => {
                 self.post_to_work(json.as_str());
+                Ok(json)
+            },
+            Err(err) => Err(err)
+        }
+    }
+
+
+    fn post_task_info(&mut self, task: &Task) -> GenResult<String>{
+        match task.serialize(){
+            Ok(json) => {
+                let routing_key = "task_for_".to_string()+task.parent_id.as_str();
+                self.post_to_info(routing_key.as_str(), json.as_str());
                 Ok(json)
             },
             Err(err) => Err(err)
