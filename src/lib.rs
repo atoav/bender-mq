@@ -35,7 +35,7 @@ extern crate bender_config;
 extern crate bender_job;
 extern crate amqp;
 
-use bender_job::Task;
+use bender_job::task::Task;
 use bender_config::Config;
 use bender_job::Job;
 use amqp::{Basic, Session, Table, protocol};
