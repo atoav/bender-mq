@@ -9,7 +9,7 @@ workspace = ".."
 
 [package.metadata.deb]
 extended-description = "As part of the bender renderfarm, the bender-mq library acts as a link between the various services and rabbitmq"
-depends = "$auto"
+depends = "$auto, rabbitmq-server"
 
 [dependencies]
 amqp = { version = "0.1.2", default-features = false }
