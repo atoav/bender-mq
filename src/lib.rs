@@ -31,8 +31,8 @@
 //! Check out the examples at the [BenderMQ](trait.BenderMQ.html) trait definition
 
 
-extern bender_config;
-extern bender_job;
+extern crate bender_config;
+extern crate bender_job;
 extern crate amqp;
 
 use bender_job::task::Task;
