@@ -31,13 +31,13 @@
 //! Check out the examples at the [BenderMQ](trait.BenderMQ.html) trait definition
 
 
-extern crate bender-config;
-extern crate bender-job;
+extern bender_config;
+extern bender_job;
 extern crate amqp;
 
-use bender-job::task::Task;
-use bender-config::Config;
-use bender-job::Job;
+use bender_job::task::Task;
+use bender_config::Config;
+use bender_job::Job;
 use amqp::{Basic, Session, Table, protocol};
 pub use amqp::Channel;
 
