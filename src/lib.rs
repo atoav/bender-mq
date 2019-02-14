@@ -151,8 +151,7 @@ impl BenderMQ for Channel{
     /// Open a AMPQ session and return a channel to the default URK specified in\
     /// the config.
     fn open_default_channel() -> GenResult<Self>{
-        let p = Config::location();
-        let config = Config::from_file(p).unwrap();
+        let config = Config::get();
         let mut session = Session::open_url(config.rabbitmq.url.as_str()).expect(format!("Error while opening a connection to {}", config.rabbitmq.url).as_str());
         let channel = session.open_channel(1)?;
         Ok(channel)
