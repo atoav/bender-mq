@@ -231,7 +231,7 @@ impl BenderMQ for Channel{
     // Declare a topic exchange named `worker`. Messages to this exchange \
     /// may be posted using the `worker_post()` method.
     fn declare_worker_exchange(&mut self) -> GenResult<()>{
-        let exchange_name = "worker";
+        let exchange_name = "worker-topic";
         let exchange_type = "topic";
         // exchange name, exchange type, passive, durable, auto_delete, internal, nowait, arguments
         // posibble exchange types are: direct, fanout, topic, headers
