@@ -99,6 +99,16 @@ pub trait BenderMQ{
     /// ```
     fn declare_work_exchange(&mut self) -> GenResult<()>;
 
+    /// Declare a direct exchange named `worker-topic`. Messages to this exchange \
+    /// may be posted using the `worker_post()` method.
+    /// ```
+    /// # extern crate bender_mq;
+    /// # use bender_mq::{Channel, BenderMQ};
+    /// let mut channel = Channel::open_default_channel().expect("Couldn't aquire connection.");
+    /// channel.declare_worker_exchange().expect("Declaration of worker-topic exchange failed");
+    /// ```
+    fn declare_worker_exchange(&mut self) -> GenResult<()>;
+
     /// Declare a queue named `info`. This queue will be bound to the exchange \
     /// named `info-topic`.
     fn create_info_queue(&mut self) -> GenResult<()>;
@@ -111,6 +121,9 @@ pub trait BenderMQ{
     /// named `work`.
     fn create_work_queue(&mut self) -> GenResult<()>;
 
+    /// Declare a queue named `worker`. This queue will be bound to the exchange \
+    /// named `worker-topic`.
+    fn create_worker_queue(&mut self) -> GenResult<()>;
 
     /// Post a routed message to `info-topic` exchange with a routing key of your choice
     fn post_to_info<S, U>(&mut self, routing_key: S, message: U) where S: Into<String>, U: Into<Vec<u8>>;
@@ -120,6 +133,9 @@ pub trait BenderMQ{
 
     /// Post a direct message to `work` exchange
     fn post_to_work<U>(&mut self, message: U) where U: Into<Vec<u8>>;
+
+    /// Post a routed message to `worker-topic` exchange with a routing key of your choice
+    fn post_to_worker<S, U>(&mut self, routing_key: S, message: U) where S: Into<String>, U: Into<Vec<u8>>;
 
     /// Serialize a job and post it to the the `job` exchange using the \
     /// `post_to_job()` method. Get the serialized json back for debouncing
@@ -143,7 +159,7 @@ impl BenderMQ for Channel{
     /// Open a AMPQ session and return a channel.
     fn open_channel<S>(url: S) -> GenResult<Self> where S: Into<String>{
         let url = url.into();
-        let mut session = Session::open_url(url.as_str()).expect(format!("Error while opening a connection to {}", url).as_str());
+        let mut session = Session::open_url(url.as_str()).unwrap_or_else(|_| panic!("Error while opening a connection to {}", url));
         let channel = session.open_channel(1)?;
         Ok(channel)
     }
@@ -152,7 +168,7 @@ impl BenderMQ for Channel{
     /// the config.
     fn open_default_channel() -> GenResult<Self>{
         let config = Config::get();
-        let mut session = Session::open_url(config.rabbitmq.url.as_str()).expect(format!("Error while opening a connection to {}", config.rabbitmq.url).as_str());
+        let mut session = Session::open_url(config.rabbitmq.url.as_str()).unwrap_or_else(|_| panic!("Error while opening a connection to {}", config.rabbitmq.url));
         let channel = session.open_channel(1)?;
         Ok(channel)
     }
@@ -212,14 +228,36 @@ impl BenderMQ for Channel{
         Ok(())
     }
 
+    // Declare a topic exchange named `worker`. Messages to this exchange \
+    /// may be posted using the `worker_post()` method.
+    fn declare_worker_exchange(&mut self) -> GenResult<()>{
+        let exchange_name = "worker";
+        let exchange_type = "topic";
+        // exchange name, exchange type, passive, durable, auto_delete, internal, nowait, arguments
+        // posibble exchange types are: direct, fanout, topic, headers
+        self.exchange_declare(exchange_name, exchange_type, false, true, false, false, false, Table::new())?;
+        Ok(())
+    }
+
     /// Create a Work queue that is bound to the work exchange
     fn create_work_queue(&mut self) -> GenResult<()>{
-        let queue_name = "work";
+        let queue_name = "worker-topic";
         // let exchange_name = "work";
         //queue: &str, passive: bool, durable: bool, exclusive: bool, auto_delete: bool, nowait: bool, arguments: Table
         self.queue_declare(queue_name, false, true, false, false, false, Table::new())?;
         // queue: S, exchange: S, routing_key: S, nowait: bool,a rguments: Table
         // self.queue_bind(queue_name, exchange_name, "#", false, Table::new())?;
+        Ok(())
+    }
+
+    /// Create a worker queue that is bound to the info-topic exchange
+    fn create_worker_queue(&mut self) -> GenResult<()>{
+        let queue_name = "worker";
+        let exchange_name = "worker-topic";
+        //queue: &str, passive: bool, durable: bool, exclusive: bool, auto_delete: bool, nowait: bool, arguments: Table
+        self.queue_declare(queue_name, false, true, false, false, false, Table::new())?;
+        // queue: S, exchange: S, routing_key: S, nowait: bool,a rguments: Table
+        self.queue_bind(queue_name, exchange_name, "#", false, Table::new())?;
         Ok(())
     }
 
@@ -233,9 +271,8 @@ impl BenderMQ for Channel{
         let routing_key = routing_key.as_str();
         let properties = protocol::basic::BasicProperties{ content_type: Some("text".to_string()), ..Default::default()};
         let message = message.into();
-        match self.basic_publish(exchange, routing_key, mandatory, immediate, properties, message){
-            Err(err) => println!("Error: Couldn't publish message to info-topic exchange: {}", err),
-            Ok(_) => ()
+        if let Err(err) = self.basic_publish(exchange, routing_key, mandatory, immediate, properties, message) { 
+            println!("Error: Couldn't publish message to info-topic exchange: {}", err) 
         }
     }
 
@@ -247,9 +284,8 @@ impl BenderMQ for Channel{
         let routing_key = "job".to_string();
         let properties = protocol::basic::BasicProperties{ content_type: Some("text".to_string()), ..Default::default()};
         let message = message.into();
-        match self.basic_publish("", routing_key.as_str(), mandatory, immediate, properties, message){
-            Err(err) => println!("Error: Couldn't publish message to job exchange: {}", err),
-            Ok(_) => ()
+        if let Err(err) = self.basic_publish("", routing_key.as_str(), mandatory, immediate, properties, message) { 
+            println!("Error: Couldn't publish message to job exchange: {}", err) 
         }
     }
 
@@ -260,9 +296,23 @@ impl BenderMQ for Channel{
         let routing_key = "work".to_string();
         let properties = protocol::basic::BasicProperties{ content_type: Some("text".to_string()), ..Default::default()};
         let message = message.into();
-        match self.basic_publish("", routing_key.as_str(), mandatory, immediate, properties, message){
-            Err(err) => println!("Error: Couldn't publish message to info-topic exchange: {}", err),
-            Ok(_) => ()
+        if let Err(err) = self.basic_publish("", routing_key.as_str(), mandatory, immediate, properties, message) { 
+            println!("Error: Couldn't publish message to info-topic exchange: {}", err) 
+        }
+    }
+
+    // Post a message to `worker-topic` exchange with a routing key of your choice
+    fn post_to_worker<S, U>(&mut self, routing_key: S, message: U) where S: Into<String>, U: Into<Vec<u8>>{
+        // let queue_name = "worker";
+        let exchange = "worker-topic";
+        let mandatory = true;
+        let immediate = false;
+        let routing_key = routing_key.into();
+        let routing_key = routing_key.as_str();
+        let properties = protocol::basic::BasicProperties{ content_type: Some("text".to_string()), ..Default::default()};
+        let message = message.into();
+        if let Err(err) = self.basic_publish(exchange, routing_key, mandatory, immediate, properties, message) { 
+            println!("Error: Couldn't publish message to info-topic exchange: {}", err) 
         }
     }
 
