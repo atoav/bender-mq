@@ -241,7 +241,7 @@ impl BenderMQ for Channel{
 
     /// Create a Work queue that is bound to the work exchange
     fn create_work_queue(&mut self) -> GenResult<()>{
-        let queue_name = "worker-topic";
+        let queue_name = "work";
         // let exchange_name = "work";
         //queue: &str, passive: bool, durable: bool, exclusive: bool, auto_delete: bool, nowait: bool, arguments: Table
         self.queue_declare(queue_name, false, true, false, false, false, Table::new())?;
