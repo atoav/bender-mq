@@ -135,7 +135,7 @@ pub trait BenderMQ{
     fn post_to_work<U>(&mut self, message: U) where U: Into<Vec<u8>>;
 
     /// Post a routed message to `worker-topic` exchange with a routing key of your choice
-    fn post_to_worker<S, U>(&mut self, routing_key: S, message: U) where S: Into<String>, U: Into<Vec<u8>>;
+    fn worker_post<S, U>(&mut self, routing_key: S, message: U) where S: Into<String>, U: Into<Vec<u8>>;
 
     /// Serialize a job and post it to the the `job` exchange using the \
     /// `post_to_job()` method. Get the serialized json back for debouncing
@@ -302,7 +302,7 @@ impl BenderMQ for Channel{
     }
 
     // Post a message to `worker-topic` exchange with a routing key of your choice
-    fn post_to_worker<S, U>(&mut self, routing_key: S, message: U) where S: Into<String>, U: Into<Vec<u8>>{
+    fn worker_post<S, U>(&mut self, routing_key: S, message: U) where S: Into<String>, U: Into<Vec<u8>>{
         // let queue_name = "worker";
         let exchange = "worker-topic";
         let mandatory = true;
