@@ -4,28 +4,32 @@ bender_mq is a rust library, that implements additional methods for the
 amqp crate via traits
 
 It can be loaded in a rust library via the public git mirror by putting this in your Cargo.toml:
-```rust
+```
 [dependencies]
 bender_mq = { git = "ssh://git@code.hfbk.net:4242/bendercode/bender-mq.git" }
 ```
 To update this run
-```rust
+```
 cargo clean
 cargo update
 ```
 
 ### Testing
 The tests can be run with
-```rust
+```
 cargo test
 ```
 
 ### Documentation
 If you want to view the documentation run
-```rust
+```
 cargo doc --no-deps --open
 ```
 
 ### Installation
-To run cargo, make sure you have rust installed. Go to [rustup.rs](http://rustup.rs) and follow the instructions there
+This is a library and will not be directly used. No need to install anything here
 
+### API Methods
+Check out the examples at the [BenderMQ](trait.BenderMQ.html) trait definition
+
+License: MIT
