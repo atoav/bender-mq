@@ -14,5 +14,5 @@ depends = "$auto, rabbitmq-server"
 [dependencies]
 amqp = { version = "0.1.3", default-features = false }
 
-bender_config = { git = "ssh://git@code.hfbk.net:4242/bendercode/bender-config.git" }
-bender_job = { git = "ssh://git@code.hfbk.net:4242/bendercode/bender-job.git" }
+bender_config = { git = "https://github.com/atoav/bender-config.git" }
+bender_job = { git = "https://github.com/atoav/bender-job.git" }
